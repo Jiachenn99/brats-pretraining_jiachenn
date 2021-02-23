@@ -3,6 +3,16 @@ import torch
 import torchvision.models as models
 
 def conv2d_to_conv3d(layer):
+    """
+    Basically just takes the properties and weights of conv2d and
+    converts to conv3d
+
+    output:
+    in_channels, out_channels: 64, 64
+    kernel_size : (1,3,3) -> D x W x H
+    stride: (1,1,1)
+    padding: (0, 1, 1)
+    """
     in_channels = layer.in_channels
     out_channels = layer.out_channels
     new_weight = layer.weight.unsqueeze(2)
@@ -20,6 +30,9 @@ def conv2d_to_conv3d(layer):
     return new_layer
 
 def batch2d_to_batch3d(layer):
+    """
+    Converts batch normalization 2d layers into 3d
+    """
     num_features = layer.num_features
     eps = layer.eps
     momentum = layer.momentum
@@ -31,6 +44,7 @@ def batch2d_to_batch3d(layer):
     return new_bn
 
 def pool2d_to_pool3d(layer):
+
     kernel_size = tuple([1, layer.kernel_size, layer.kernel_size])
     stride = tuple([1, layer.stride, layer.stride])
     padding = layer.padding
@@ -77,6 +91,9 @@ def conv1x3x3(in_, out):
     return nn.Conv3d(in_, out, kernel_size=(1,3,3), padding=(0,1,1))
 
 def conv3x1x1(in_, out):
+    """
+    Not used unless depth argument specified in ConvRelu
+    """
     # padding=(0,0,0) when depth reduction, otherwise (1,0,0)
     # return nn.Conv3d(in_, out, kernel_size=(3,1,1), padding=(0,0,0))
     return nn.Conv3d(in_, out, kernel_size=(3,1,1), padding=(1,0,0))
@@ -98,6 +115,10 @@ class ConvRelu(nn.Module):
         return x
     
 class ConvReluFromEnc(nn.Module):
+    """
+    Seems like its not in use
+
+    """
     def __init__(self, conv, bn, relu):
         super().__init__()
         self.conv = conv
@@ -115,7 +136,7 @@ class Upsample2D(nn.Module):
         super().__init__()
 
         self.block = nn.Sequential(
-            ConvRelu(in_channels, middle_channels),
+            ConvRelu(in_channels, middle_channels), #didnt specify depth, hence conv is (1,3,3), like resnet3d
             nn.ConvTranspose3d(middle_channels, out_channels, kernel_size=(1,4,4), stride=(1,2,2), padding=(0,1,1)),
             nn.ReLU(inplace=True)
         )
@@ -130,7 +151,7 @@ class AlbuNet3D34(nn.Module):
         self.num_classes = num_classes
         self.encoder = models.resnet34(pretrained=pretrained)
         
-        self.pool = nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2))
+        self.pool = nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2)) # kernel size decreased
         conv0_modules = [self.encoder.conv1, self.encoder.bn1, self.encoder.relu, self.pool]
         self.conv0 = nn.Sequential(*transform_module_list(conv0_modules))
         
@@ -162,6 +183,11 @@ class AlbuNet3D34(nn.Module):
         
         # number output filters: 512
         
+        ### EVERYTHING ABOVE IS THE RESNET BACKBONE, USING RESNET WEIGHTS
+
+        #############################################################################################
+        # Albunet architecture starts below
+
         # self.center = Upsample2D(512, num_filters * 8 * 2, num_filters * 8)
         self.center = ConvRelu(512, num_filters * 8) # 128
 
