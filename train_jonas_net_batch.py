@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1"
 
 #%%
 # videos.py
@@ -38,6 +38,8 @@ parser.set_defaults(use_gpu=True)
 parser.add_argument('--no_multiclass', dest='multi_class', action='store_false', help='Tumor Core Only')
 parser.set_defaults(multi_class=True)
 parser.add_argument('--seed', type=int, help='PyTorch Seed for Weight Initialization', default=1234)
+parser.add_argument('--multi_gpu', dest='multi_gpu', action='store_true', help='Multi GPU with nn parallel')
+parser.set_defaults(multi_gpu=True)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -63,6 +65,7 @@ logging.info('Starting logging for {}'.format(args.name))
 # }
 
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
+#patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingDataReduced'.format(str(args.brats_train_year)))
 batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
@@ -78,6 +81,7 @@ if not args.use_validation:
 
 #%%
 patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
+#patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationDataReduced'.format(str(args.brats_test_year)))
 target_patients = patients_test
 
 
@@ -229,7 +233,7 @@ metric = dice_multi_class if args.multi_class else dice
 model_trainer = ModelTrainer(args.name, net_3d, tr_gen, val_gen, loss_fn, metric,
                              lr=args.learning_rate, epochs=args.epochs,
                              num_batches_per_epoch=100, num_validation_batches_per_epoch=100,
-                             use_gpu=args.use_gpu, multi_class=args.multi_class)
+                             use_gpu=args.use_gpu, multi_class=args.multi_class, use_multi_gpu=args.multi_gpu)
 
 
 #%%

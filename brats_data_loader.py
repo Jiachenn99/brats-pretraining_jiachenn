@@ -112,7 +112,7 @@ class BRATSDataLoader(DataLoader):
         
     @staticmethod
     def load_patient(patient):
-        data = np.load(patient + ".npy", mmap_mode="r")
+        data = np.load(patient + ".npy", mmap_mode="r+")
         metadata = load_pickle(patient + ".pkl")
         return data, metadata
 

@@ -18,13 +18,17 @@ class ModelTrainer():
     
     def __init__(self, model_name, model, train_loader, val_loader, loss_fn, metric, lr=1e-3,
                  epochs=10, num_batches_per_epoch=10, num_validation_batches_per_epoch=3,
-                 use_gpu=False, multi_class=False):
+                 use_gpu=False, multi_class=False, use_multi_gpu=False):
         super(ModelTrainer, self).__init__()
         
         self.use_gpu = use_gpu
         if use_gpu:
             model.cuda()
         
+        if use_multi_gpu:
+            import torch.nn as nn
+            self.model=nn.DataParallel(model, device_ids=[0,1])
+        print(f"Multi gpu status: {use_multi_gpu}")
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -75,6 +79,8 @@ class ModelTrainer():
             batch = next(train_loader)
             data = torch.from_numpy(batch['data'])
             target = torch.from_numpy(batch['seg']).type(torch.LongTensor)
+#            print(f"Training Data shape: {data.shape}")
+#            print(f"Training Target labels shape: {target.shape}")
             
             if self.multi_class:
                 target_oh = torch.zeros(target.shape[0], 4, *target.shape[2:])
@@ -86,6 +92,7 @@ class ModelTrainer():
             # data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
+ #           print(f"Training output shape: {output.detach().cpu().numpy().shape}")
             loss = self.loss_fn(output, target)
             loss.backward()
             optimizer.step()
@@ -140,6 +147,9 @@ class ModelTrainer():
                 if self.use_gpu:
                     data, target = data.cuda(), target.cuda()
                 output = model(data)
+                testing_dims = output.detach().cpu().numpy()
+  #              print(f"Dimensions of the validation output: {testing_dims.shape}")
+		
                 val_loss += self.loss_fn(output, target).item()
                 metric_output = self.metric(output, target)
                 if self.multi_class:
