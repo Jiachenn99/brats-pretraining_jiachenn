@@ -66,6 +66,7 @@ logging.info('Starting logging for {}'.format(args.name))
 
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
 #patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingDataReduced'.format(str(args.brats_train_year)))
+print(f"The number of training patients: {len(patients)}")
 batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
@@ -82,6 +83,7 @@ if not args.use_validation:
 #%%
 patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
 #patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationDataReduced'.format(str(args.brats_test_year)))
+print(f"The number of testing patients: {len(patients_test)}")
 target_patients = patients_test
 
 
