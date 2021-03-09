@@ -28,7 +28,7 @@ class ModelTrainer():
         if use_multi_gpu:
             import torch.nn as nn
             self.model=nn.DataParallel(model, device_ids=[0,1])
-        print(f"Multi gpu status: {use_multi_gpu}")
+
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -62,12 +62,15 @@ class ModelTrainer():
             self.train_epoch(self.model, self.train_loader, self.optimizer, epoch)
             self.val_epoch(self.model, self.val_loader, epoch)
 
+            if epoch%10==0:
+                self.save_model(self.save_dir+ f"_{epoch}")
+
         time_elapsed = time() - t0
         log('\nTime elapsed: {:.2f} seconds'.format(time_elapsed))
         self.train_writer.close()
         self.val_writer.close()
 
-        self.save_model(self.save_dir)
+        #self.save_model(self.save_dir)
         
         return time_elapsed
 
@@ -178,7 +181,7 @@ class ModelTrainer():
         log('[Val] Avg. Loss: {:.2f}'.format(val_loss))
         
     def save_model(self, path):
-        log('Saved to: {}'.format(path))
+        log(f'Saved to: {path}')
         torch.save(self.model.state_dict(), path)
         
     def load_model(self, path):

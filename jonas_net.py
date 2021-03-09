@@ -149,7 +149,12 @@ class AlbuNet3D34(nn.Module):
         super(AlbuNet3D34, self).__init__()
         # resnet34 has a lot of blocks
         self.num_classes = num_classes
+        #self.encoder = models.resnet18(pretrained=pretrained)
         self.encoder = models.resnet34(pretrained=pretrained)
+        #self.encoder = models.resnet50(pretrained=pretrained)
+        #self.encoder = models.resnet101(pretrained=pretrained)
+        #self.encoder = models.deeplabv3_resnet50(pretrained=pretrained)
+
         
         self.pool = nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2)) # kernel size decreased
         conv0_modules = [self.encoder.conv1, self.encoder.bn1, self.encoder.relu, self.pool]

@@ -64,13 +64,16 @@ logging.info('Starting logging for {}'.format(args.name))
 #     }
 # }
 
+# Training data
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
-#patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingDataReduced'.format(str(args.brats_train_year)))
+
+# Take subset of patients for lr test
+patients = patients[0:184]
+
 print(f"The number of training patients: {len(patients)}")
 batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
-
 
 #%%
 # num_splits=5 means 1/5th is validation data!
@@ -80,9 +83,11 @@ if not args.use_validation:
     patients_train = patients
 
 
-#%%
+#%% 
+# Test data (using validation data of brats20, brats18 for testing)
 patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
-#patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationDataReduced'.format(str(args.brats_test_year)))
+patients_test = patients_test[0:63]
+
 print(f"The number of testing patients: {len(patients_test)}")
 target_patients = patients_test
 
@@ -319,6 +324,8 @@ def predict_patient_in_patches(patient_data, model):
     
     # (1, 4, 138, 169, 141)
     target_shape = list(patient_data_pd.shape)
+    print(f"Target shape in predict patient in patches is: {target_shape}")
+
     if args.multi_class:
         target_shape[1] = 4
     else:
@@ -371,7 +378,8 @@ for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_
     #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
     # logging.info("{}, {}".format(idx, dice))
     # dices.append(dice)
-    
+
+
     # repair labels
     np_cut[np_cut == 3] = 4
     output_path = '/'.join(target_patients[idx].split('/')[-2:])

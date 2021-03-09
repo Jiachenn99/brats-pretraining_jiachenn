@@ -1,3 +1,7 @@
+slurm*.out
+system_slurms/*
+Unused_sh_scripts/*
+
 .vscode/*
 models/*
 #segmentation_output/*
