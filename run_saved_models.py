@@ -48,6 +48,7 @@ in_channels = ['t1c', 't2', 'flair']
 #%% 
 # Test data (using validation data of brats20, brats18 for testing)
 patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
+#patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_test_year))) #This is strictly testing purposes
 target_patients = patients_test
 print(f"The number of testing patients: {len(target_patients)}")
 
@@ -174,45 +175,85 @@ model_path = "/cs/home/hfyjc3/brats-pretraining_jiachenn/models/"
 model = AlbuNet3D34(num_classes=4)
 model.cuda()
 
-for epochs in range(0+10, 60+10, 10):
-    model.load_state_dict(torch.load(model_path+f"{args.model_name}_{epochs}"))
-    print(f"Model: {args.model_name}_{epochs}")
+#for epochs in range(0+10, 60+10, 10):
+#     model.load_state_dict(torch.load(model_path+f"{args.model_name}_{epochs}"))
+#     print(f"Model: {args.model_name}_{epochs}")
 
-    #%%  Perform prediction and save predictons
-    for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): #  + ['seg']
-        print(f"Predicting patient {target_patients[idx].split('/')[-2:]}")
+#     #%%  Perform prediction and save predictons
+#     for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): #  + ['seg']
+#         print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
     
-        model.eval()
-        with torch.no_grad():
-            prediction = predict_patient_in_patches(patient_data, model)
+#         model.eval()
+#         with torch.no_grad():
+#             prediction = predict_patient_in_patches(patient_data, model)
         
-        np_prediction = prediction.cpu().detach().numpy()
+#         np_prediction = prediction.cpu().detach().numpy()
 
-        if args.multi_class:
-            np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
-        else:
-            np_prediction[np_prediction > 0] = 1 # tumor core
-            np_prediction[np_prediction < 0] = 0
+#         if args.multi_class:
+#             np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
+#         else:
+#             np_prediction[np_prediction > 0] = 1 # tumor core
+#             np_prediction[np_prediction < 0] = 0
     
-        np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
+#         np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
     
-        # if args.multi_class:
-        #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
-        # else:
-        #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
-        # logging.info("{}, {}".format(idx, dice))
-        # dices.append(dice)
+#         # if args.multi_class:
+#         #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
+#         # else:
+#         #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
+#         # logging.info("{}, {}".format(idx, dice))
+#         # dices.append(dice)
 
-        # repair labels
-        np_cut[np_cut == 3] = 4
-        output_path = '/'.join(target_patients[idx].split('/')[-2:])
-        output_path = os.path.join('segmentation_output', args.model_name+f"_{epochs}", output_path + '.nii.gz')
+#         # repair labels
+#         np_cut[np_cut == 3] = 4
+#         output_path = '/'.join(target_patients[idx].split('/')[-2:])
+#         output_path = os.path.join('segmentation_output', args.model_name+f"_{epochs}", output_path + '.nii.gz')
 
-        if not os.path.exists(os.path.dirname(output_path)):
-            try:
-                os.makedirs(os.path.dirname(output_path))
-            except OSError as exc: # Guard against race condition
-                logging.info('An error occured when trying to create the saving directory!')
+#         if not os.path.exists(os.path.dirname(output_path)):
+#             try:
+#                 os.makedirs(os.path.dirname(output_path))
+#             except OSError as exc: # Guard against race condition
+#                 logging.info('An error occured when trying to create the saving directory!')
 
-        save_segmentation_as_nifti(np_cut, meta_data, output_path)
+#         save_segmentation_as_nifti(np_cut, meta_data, output_path)
 
+model.load_state_dict(torch.load(model_path+f"{args.model_name}"))
+print(f"Model: {args.model_name}")
+
+#%%  Perform prediction and save predictons
+for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): #  + ['seg']
+    print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
+
+    model.eval()
+    with torch.no_grad():
+        prediction = predict_patient_in_patches(patient_data, model)
+    
+    np_prediction = prediction.cpu().detach().numpy()
+
+    if args.multi_class:
+        np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
+    else:
+        np_prediction[np_prediction > 0] = 1 # tumor core
+        np_prediction[np_prediction < 0] = 0
+
+    np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
+
+    # if args.multi_class:
+    #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
+    # else:
+    #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
+    # logging.info("{}, {}".format(idx, dice))
+    # dices.append(dice)
+
+    # repair labels
+    np_cut[np_cut == 3] = 4
+    output_path = '/'.join(target_patients[idx].split('/')[-2:])
+    output_path = os.path.join('segmentation_output', args.model_name+f"_patchdepth_{args.patch_depth}", output_path + '.nii.gz')
+
+    if not os.path.exists(os.path.dirname(output_path)):
+        try:
+            os.makedirs(os.path.dirname(output_path))
+        except OSError as exc: # Guard against race condition
+            logging.info('An error occured when trying to create the saving directory!')
+
+    save_segmentation_as_nifti(np_cut, meta_data, output_path)

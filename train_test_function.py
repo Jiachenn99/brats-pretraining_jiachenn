@@ -45,7 +45,7 @@ class ModelTrainer():
         
         # we should have one log dir per run
         # otherwise tensorboard will have overlapping graphs
-        self.model_name = '{}_lr_{}_epochs_{}'.format(model_name, lr, epochs)
+        self.model_name = '{}_lr_{}_epochs_{}_epochbatch_{}'.format(model_name, lr, epochs, num_batches_per_epoch)
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         self.train_writer = SummaryWriter(self.log_dir + '/train')
@@ -53,7 +53,9 @@ class ModelTrainer():
         
     def run(self):
         t0 = time()
-        
+        print(f"Training epoch batch size: {self.num_batches_per_epoch}")
+        print(f"Validation epoch batch size: {self.num_validation_batches_per_epoch}")
+
         # first val loss before training
         self.val_epoch(self.model, self.val_loader, 0)
         
@@ -63,14 +65,14 @@ class ModelTrainer():
             self.val_epoch(self.model, self.val_loader, epoch)
 
             if epoch%10==0:
-                self.save_model(self.save_dir+ f"_{epoch}")
+                self.save_model(self.save_dir+f"_epoch_{epoch}")
 
         time_elapsed = time() - t0
         log('\nTime elapsed: {:.2f} seconds'.format(time_elapsed))
         self.train_writer.close()
         self.val_writer.close()
 
-        #self.save_model(self.save_dir)
+        #self.save_model(self.save_dir+f"trainingvalbatchsize_{self.num_batches_per_epoch}")
         
         return time_elapsed
 
@@ -78,6 +80,7 @@ class ModelTrainer():
         model.train()
         train_loss = 0
         train_metric = [0, 0, 0]
+
         for batch_idx in range(self.num_batches_per_epoch):
             batch = next(train_loader)
             data = torch.from_numpy(batch['data'])
@@ -129,7 +132,7 @@ class ModelTrainer():
                 metric_label = metrics[idx]
             self.train_writer.add_scalar(metric_label, m, iteration)
             log('[Train] Avg. {}: {:.2f}'.format(metric_label, m))
-
+		
         log('[Train] Avg. Loss: {:.2f}'.format(train_loss))
 
     def val_epoch(self, model, val_loader, epoch):

@@ -25,6 +25,8 @@ parser.add_argument('--batch_size', type=int, help='Batch Size', default=24)
 parser.add_argument('--patch_depth', type=int, help='Depth of the Input Patch', default=24)
 parser.add_argument('--patch_width', type=int, help='Width of the Input Patch', default=128)
 parser.add_argument('--patch_height', type=int, help='Height of the Input Patch', default=128)
+parser.add_argument('--training_batch_size', type=int, help='Size of batch in training', default=100)
+parser.add_argument('--validation_batch_size', type=int, help='Size of batch in validation', default=100)
 parser.add_argument('--no_pretrained', dest='pretrained', action='store_false', help='ResNet34 without Pretraining')
 parser.set_defaults(pretrained=True)
 parser.add_argument('--brats_train_year', type=int, help='BRATS Train Year', default=17)
@@ -66,11 +68,8 @@ logging.info('Starting logging for {}'.format(args.name))
 
 # Training data
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
-
-# Take subset of patients for lr test
-patients = patients[0:184]
-
 print(f"The number of training patients: {len(patients)}")
+
 batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
@@ -82,15 +81,13 @@ patients_train, patients_val = get_split_deterministic(patients, fold=0, num_spl
 if not args.use_validation:
     patients_train = patients
 
-
 #%% 
 # Test data (using validation data of brats20, brats18 for testing)
-patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
-patients_test = patients_test[0:63]
+#patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
+#patients_test = patients_test[0:63]
 
-print(f"The number of testing patients: {len(patients_test)}")
-target_patients = patients_test
-
+#print(f"The number of testing patients: {len(patients_test)}")
+#target_patients = patients_test
 
 #%%
 train_dl = BRATSDataLoader(
@@ -124,7 +121,6 @@ val_gen = MultiThreadedAugmenter(val_dl, None,
                                  num_cached_per_queue=1,
                                  seeds=None,
                                  pin_memory=False)
-
 
 #%%
 tr_gen.restart()
@@ -237,10 +233,20 @@ net_3d = AlbuNet3D34(num_classes=num_classes, pretrained=args.pretrained, is_dec
 #%%
 loss_fn = GeneralizedDiceLoss() if args.multi_class else SimpleDiceLoss()
 metric = dice_multi_class if args.multi_class else dice
+#model_trainer = ModelTrainer(args.name, net_3d, tr_gen, val_gen, loss_fn, metric,
+#                             lr=args.learning_rate, epochs=args.epochs,
+#                             num_batches_per_epoch=100, num_validation_batches_per_epoch=100,
+#                             use_gpu=args.use_gpu, multi_class=args.multi_class, use_multi_gpu=args.multi_gpu)
+
+
+print(f"Training batch size is: {args.training_batch_size}")
+print(f"Validation batch size is: {args.validation_batch_size}")
+print(f"Number of training epochs is: {args.epochs}")
+
 model_trainer = ModelTrainer(args.name, net_3d, tr_gen, val_gen, loss_fn, metric,
                              lr=args.learning_rate, epochs=args.epochs,
-                             num_batches_per_epoch=100, num_validation_batches_per_epoch=100,
-                             use_gpu=args.use_gpu, multi_class=args.multi_class, use_multi_gpu=args.multi_gpu)
+                             num_batches_per_epoch=args.training_batch_size, num_validation_batches_per_epoch=args.validation_batch_size,
+                             use_gpu=args.use_gpu, multi_class=args.multi_class, use_multi_gpu=args.multi_gpu)    
 
 
 #%%
