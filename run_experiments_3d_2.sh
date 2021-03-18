@@ -2,17 +2,15 @@
 
 #SBATCH -p cs -A cs -q csug
 #SBATCH -c8 --mem=24g
-#SBATCH --gres gpu:1 --constraint=2080ti
+#SBATCH --gres gpu:2 --constraint=2080ti
 
 module load nvidia/cuda-10.1
 module load nvidia/cudnn-v7.6.5.32-forcuda10.1
 
 for i in 1
 do
-	for j in 50 75 
-	do
-		python3 train_jonas_net_batch.py -name brats20_3d_pretrained_trainbatchsize_$j --batch_size 12 --patch_depth 24 --brats_train_year 20 --brats_test_year 20 --learning_rate 0.0001 --epochs 50 --seed $i --training_batch_size $j --validation_batch_size $j		
-	done
+ 
+	python3 train_jonas_net_batch.py -name brats20_3d_pretrained_originalconfig_$i --batch_size 12 --patch_depth 24 --brats_train_year 20 --brats_test_year 20 --seed $i		
 
 done
 
