@@ -3,7 +3,7 @@
 from brats_data_loader import get_list_of_patients, get_train_transform, iterate_through_patients, BRATSDataLoader
 from train_test_function import ModelTrainer
 from jonas_net import AlbuNet3D34
-
+from brats_data_loader import BRATSDataLoader
 from batchgenerators.utilities.data_splitting import get_split_deterministic
 from batchgenerators.dataloading import MultiThreadedAugmenter
 
@@ -21,13 +21,14 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import argparse
 parser = argparse.ArgumentParser(description='Run saved models')
 parser.add_argument('-model_name', type=str, help='Name of the Model')
-parser.add_argument('--batch_size', type=int, help='Batch Size', default=24)
+parser.add_argument('--batch_size', type=int, help='Batch Size', default=1)
 parser.add_argument('--patch_depth', type=int, help='Depth of the Input Patch', default=24)
 parser.add_argument('--patch_width', type=int, help='Width of the Input Patch', default=128)
 parser.add_argument('--patch_height', type=int, help='Height of the Input Patch', default=128)
 parser.add_argument('--epochs_max', type=int, help='Number of epochs of model', default=50)
 parser.add_argument('--brats_test_year', type=int, help='BRATS Test Year', default=20)
-parser.add_argument('--testing_train_set', type=int, help='BRATS Test Year', default=0)
+parser.add_argument('--patient_start', type=int, help='Patient start', default=0)
+parser.add_argument('--patient_end', type=int, help='Patient start', default=25)
 parser.add_argument('--no_gpu', dest='use_gpu', action='store_false', help='Use CPU instead of GPU')
 parser.set_defaults(use_gpu=True)
 parser.add_argument('--no_multiclass', dest='multi_class', action='store_false', help='Tumor Core Only')
@@ -36,8 +37,11 @@ args = parser.parse_args()
 
 #torch.manual_seed(args.seed)
 
+# Training data
+# patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
+# print(f"The number of training patients: {len(patients)}")
 batch_size = args.batch_size
-patch_size = [args.patch_depth, args.patch_width, args.patch_height]
+# patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
 
 #%%
@@ -46,21 +50,9 @@ in_channels = ['t1c', 't2', 'flair']
 
 #%% 
 # Test data (using validation data of brats20, brats18 for testing)
-
-if args.testing_train_set:
-    patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_test_year))) #This is strictly testing purposes
-    #patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingDataUPDATED'.format(str(args.brats_test_year))) #This is strictly testing purposes
-    #patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingDataUPDATED_NEWPREPROCESS'.format(str(args.brats_test_year))) #This is strictly testing purposes
-    target_patients = patients_test
-    #target_patients = patients_test[300:]
-
-else:
-    patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
-    target_patients = patients_test
-
-
-#target_patients = patients_test
-print(f"Test set used is: {args.testing_train_set} (0 for actual test data, 1 for training data")
+patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationData'.format(str(args.brats_test_year)))
+#patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_test_year))) #This is strictly testing purposes
+target_patients = patients_test[args.patient_start:args.patient_end]
 print(f"The number of testing patients: {len(target_patients)}")
 
 
@@ -186,85 +178,77 @@ model_path = "/cs/home/hfyjc3/brats-pretraining_jiachenn/models/"
 model = AlbuNet3D34(num_classes=4)
 model.cuda()
 
-for epochs in range(0+10, args.epochs_max, 10):
-    model.load_state_dict(torch.load(model_path+f"{args.model_name}_{epochs}"))
-    print(f"Model: {args.model_name}_{epochs}")
+#%% Augmented test data version 2
+model.load_state_dict(torch.load(model_path+f"{args.model_name}"))
+print(f"Model: {args.model_name}")
+target_patients = target_patients[args.patient_start:args.patient_end]
 
-    #%%  Perform prediction and save predictons
-    for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): #  + ['seg']
-        print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
+for idx, patient in enumerate(target_patients):
+    # print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
+    print(f"Predicting patient {patient.split('/')[-1]}")
+
+    # Obtain the original size else transform will change the image size to (24,128,128)
+    original_size, metadata_old = BRATSDataLoader.load_patient(patient)
+    patch_size = list(original_size[0,:,:,:].shape)
+    #print(f"Patch size is: {patch_size}")
+    tr_transforms = get_train_transform(patch_size)
+
+    test_dl_new = BRATSDataLoader(
+    [patient],
+    batch_size=1,
+    patch_size=patch_size,
+    in_channels=in_channels
+    ) 
+
+    # What if we apply the same process to the test data first? 
+    test_gen_new =  MultiThreadedAugmenter(test_dl_new, tr_transforms, num_processes=4, 
+                                    num_cached_per_queue=2,
+                                    seeds=None, pin_memory=False, timeout=5)
     
-        model.eval()
-        with torch.no_grad():
-            prediction = predict_patient_in_patches(patient_data, model)
-        
-        np_prediction = prediction.cpu().detach().numpy()
+    batch = next(test_gen_new)
+    print(f"Loaded from the generator")
+    name = batch["names"]
+    patient_data = batch["data"]
+    meta_data = batch["metadata"][0]
+    print(f"Pat name generator: {name}")
 
-        if args.multi_class:
-            np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
-        else:
-            np_prediction[np_prediction > 0] = 1 # tumor core
-            np_prediction[np_prediction < 0] = 0
+    model.eval()
+    with torch.no_grad():
+        prediction = predict_patient_in_patches(patient_data, model)
     
-        np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
-    
-        # if args.multi_class:
-        #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
-        # else:
-        #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
-        # logging.info("{}, {}".format(idx, dice))
-        # dices.append(dice)
+    np_prediction = prediction.cpu().detach().numpy()
 
-        # repair labels
-        np_cut[np_cut == 3] = 4
-        print(f"Seg output shape is: {np_cut.shape}")
-        output_path = '/'.join(target_patients[idx].split('/')[-2:])
-        output_path = os.path.join('segmentation_output', args.model_name+f"_NEWPREPROCESS_{epochs}", output_path + '.nii.gz')
+    if args.multi_class:
+        np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
+    else:
+        np_prediction[np_prediction > 0] = 1 # tumor core
+        np_prediction[np_prediction < 0] = 0
 
-        if not os.path.exists(os.path.dirname(output_path)):
-            try:
-                os.makedirs(os.path.dirname(output_path))
-            except OSError as exc: # Guard against race condition
-                logging.info('An error occured when trying to create the saving directory!')
+    np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
 
-        save_segmentation_as_nifti(np_cut, meta_data, output_path)
+    # # if args.multi_class:
+    # #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
+    # # else:
+    # #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
+    # # logging.info("{}, {}".format(idx, dice))
+    # # dices.append(dice)
 
-#%%  Perform prediction and save predictons for single model
-# model.load_state_dict(torch.load(model_path+f"{args.model_name}"))
-# print(f"Model: {args.model_name}")
-# for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): #  + ['seg']
-#     print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
+    # repair labels
+    np_cut[np_cut == 3] = 4
+    print(f"seg output shape is {np_cut.shape}")
 
-#     model.eval()
-#     with torch.no_grad():
-#         prediction = predict_patient_in_patches(patient_data, model)
-    
-#     np_prediction = prediction.cpu().detach().numpy()
+    output_path = '/'.join(target_patients[idx].split('/')[-2:])
+    output_path = os.path.join('augmented_segmentation_output', args.model_name, output_path + '.nii.gz')
 
-#     if args.multi_class:
-#         np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
-#     else:
-#         np_prediction[np_prediction > 0] = 1 # tumor core
-#         np_prediction[np_prediction < 0] = 0
+    print(f"The output path is {output_path}")
+    if not os.path.exists(os.path.dirname(output_path)):
+        try:
+            os.makedirs(os.path.dirname(output_path))
+        except OSError as exc: # Guard against race condition
+            logging.info('An error occured when trying to create the saving directory!')
 
-#     np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
+    save_segmentation_as_nifti(np_cut, meta_data, output_path)
 
-#     # if args.multi_class:
-#     #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
-#     # else:
-#     #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
-#     # logging.info("{}, {}".format(idx, dice))
-#     # dices.append(dice)
-
-#     # repair labels
-#     np_cut[np_cut == 3] = 4
-#     output_path = '/'.join(target_patients[idx].split('/')[-2:])
-#     output_path = os.path.join('segmentation_output', args.model_name+f"_patchdepth_{args.patch_depth}", output_path + '.nii.gz')
-
-#     if not os.path.exists(os.path.dirname(output_path)):
-#         try:
-#             os.makedirs(os.path.dirname(output_path))
-#         except OSError as exc: # Guard against race condition
-#             logging.info('An error occured when trying to create the saving directory!')
-
-#     save_segmentation_as_nifti(np_cut, meta_data, output_path)
+    test_gen_new._finish()
+    del test_dl_new
+    continue

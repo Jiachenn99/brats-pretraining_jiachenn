@@ -18,17 +18,13 @@ class ModelTrainer():
     
     def __init__(self, model_name, model, train_loader, val_loader, loss_fn, metric, lr=1e-3,
                  epochs=10, num_batches_per_epoch=10, num_validation_batches_per_epoch=3,
-                 use_gpu=False, multi_class=False, use_multi_gpu=False):
+                 use_gpu=False, multi_class=False):
         super(ModelTrainer, self).__init__()
         
         self.use_gpu = use_gpu
         if use_gpu:
             model.cuda()
         
-        if use_multi_gpu:
-            import torch.nn as nn
-            self.model=nn.DataParallel(model, device_ids=[0,1])
-
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader

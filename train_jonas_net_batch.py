@@ -25,6 +25,7 @@ parser.add_argument('--batch_size', type=int, help='Batch Size', default=24)
 parser.add_argument('--patch_depth', type=int, help='Depth of the Input Patch', default=24)
 parser.add_argument('--patch_width', type=int, help='Width of the Input Patch', default=128)
 parser.add_argument('--patch_height', type=int, help='Height of the Input Patch', default=128)
+parser.add_argument('--training_max', type=int, help='max number of patients for training', default=369)
 parser.add_argument('--training_batch_size', type=int, help='Size of batch in training', default=100)
 parser.add_argument('--validation_batch_size', type=int, help='Size of batch in validation', default=100)
 parser.add_argument('--no_pretrained', dest='pretrained', action='store_false', help='ResNet34 without Pretraining')
@@ -40,8 +41,6 @@ parser.set_defaults(use_gpu=True)
 parser.add_argument('--no_multiclass', dest='multi_class', action='store_false', help='Tumor Core Only')
 parser.set_defaults(multi_class=True)
 parser.add_argument('--seed', type=int, help='PyTorch Seed for Weight Initialization', default=1234)
-parser.add_argument('--multi_gpu', dest='multi_gpu', action='store_true', help='Multi GPU with nn parallel')
-parser.set_defaults(multi_gpu=True)
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -68,6 +67,7 @@ logging.info('Starting logging for {}'.format(args.name))
 
 # Training data
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
+patients = patients[0:args.training_max]
 print(f"The number of training patients: {len(patients)}")
 
 batch_size = args.batch_size
@@ -246,7 +246,7 @@ print(f"Number of training epochs is: {args.epochs}")
 model_trainer = ModelTrainer(args.name, net_3d, tr_gen, val_gen, loss_fn, metric,
                              lr=args.learning_rate, epochs=args.epochs,
                              num_batches_per_epoch=args.training_batch_size, num_validation_batches_per_epoch=args.validation_batch_size,
-                             use_gpu=args.use_gpu, multi_class=args.multi_class, use_multi_gpu=args.multi_gpu)    
+                             use_gpu=args.use_gpu, multi_class=args.multi_class)    
 
 
 #%%

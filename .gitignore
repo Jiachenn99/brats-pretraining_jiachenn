@@ -4,10 +4,11 @@ Unused_sh_scripts/*
 
 .vscode/*
 models/*
+augmented_segmentation_output/*
 segmentation_output/*
 brats_data_preprocessed/*
 brats_data_raw/*
-#tensorboard_logs/*
+tensorboard_logs/*
 saved_models/*
 results-2d-no-pretraining/*
 Brats17-2D-Results/*

@@ -74,7 +74,6 @@ def get_train_transform(patch_size):
     tr_transforms = Compose(tr_transforms)
     return tr_transforms
 
-
 def get_list_of_patients(preprocessed_data_folder):
     npy_files = subfiles(preprocessed_data_folder, suffix=".npy", join=True)
     # remove npy file extension

@@ -7,10 +7,10 @@
 module load nvidia/cuda-10.1
 module load nvidia/cudnn-v7.6.5.32-forcuda10.1
 
-for i in 1
+for i in 1 2 3
 do
  
-	python3 train_jonas_net_batch.py -name brats20_3d_pretrained_originalconfig_$i --batch_size 12 --patch_depth 24 --brats_train_year 20 --brats_test_year 20 --seed $i		
+	python3 train_jonas_net_batch.py -name brats20_3d_pretrained_trainbatchsize_100_$i --batch_size 12 --patch_depth 24 --brats_train_year 20 --brats_test_year 20 --learning_rate 0.0001 --epochs 50 --seed $i		
 
 done
 
