@@ -150,12 +150,15 @@ def predict_patient_in_patches(patient_data, model):
     
     # (1, 4, 138, 169, 141)
     target_shape = list(patient_data_pd.shape)
-    print(f"Target shape in predict patient in patches is: {target_shape}")
+    print(f"BEFORE IF: Target shape in predict patient in patches is: {target_shape}")
 
     if args.multi_class:
         target_shape[1] = 4
     else:
         target_shape[1] = 1 # only one output channel
+
+    print(f"AFTER IF IF: Target shape in predict patient in patches is: {target_shape}")
+
     prediction = torch.zeros(*target_shape)
     if args.use_gpu:
         prediction = prediction.cuda()
@@ -207,6 +210,8 @@ for epochs in range(0+10, args.epochs_max, 10):
             np_prediction[np_prediction < 0] = 0
     
         np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
+        print(f"Shape of np_cut after crop: {np_cut.shape}")
+        print(f"Unique values in np_cut BEFORE: {np.unique(np_cut)}")
     
         # if args.multi_class:
         #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
@@ -217,9 +222,12 @@ for epochs in range(0+10, args.epochs_max, 10):
 
         # repair labels
         np_cut[np_cut == 3] = 4
+        print(f"Shape of np_cut after repair: {np_cut.shape}")
+        print(f"Unique values in np_cut AFTER: {np.unique(np_cut)}")
+
         print(f"Seg output shape is: {np_cut.shape}")
         output_path = '/'.join(target_patients[idx].split('/')[-2:])
-        output_path = os.path.join('segmentation_output', args.model_name+f"_NEWPREPROCESS_{epochs}", output_path + '.nii.gz')
+        output_path = os.path.join('segmentation_output', args.model_name+f"_{epochs}", output_path + '.nii.gz')
 
         if not os.path.exists(os.path.dirname(output_path)):
             try:
