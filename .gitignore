@@ -1,3 +1,4 @@
+virtualenv/*
 dataset/*
 figures/*
 slurm*.out
