@@ -24,11 +24,10 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import argparse
 parser = argparse.ArgumentParser(description='Run saved models')
 parser.add_argument('-model_name', type=str, help='Name of the Model')
-parser.add_argument('--batch_size', type=int, help='Batch Size', default=24)
 parser.add_argument('--patch_depth', type=int, help='Depth of the Input Patch', default=24)
 parser.add_argument('--patch_width', type=int, help='Width of the Input Patch', default=128)
 parser.add_argument('--patch_height', type=int, help='Height of the Input Patch', default=128)
-parser.add_argument('--epochs_max', type=int, help='Number of epochs of model', default=50)
+# parser.add_argument('--epochs_max', type=int, help='Number of epochs of model', default=50)
 parser.add_argument('--brats_test_year', type=int, help='BRATS Test Year', default=20)
 parser.add_argument('--testing_train_set', type=int, help='Use Training set for test?', default=0)
 parser.add_argument('--num_channels', type=int, help='Number of input channels', default=3)
@@ -38,7 +37,6 @@ parser.add_argument('--no_multiclass', dest='multi_class', action='store_false',
 parser.set_defaults(multi_class=True)
 args = parser.parse_args()
 
-batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 
 if args.num_channels == 3:

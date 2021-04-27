@@ -48,10 +48,22 @@ The dataset folder can be downloaded [by clicking this link](www.google.com), an
 ## Pre-processing our dataset
 Our dataset is first preprocessed into a format that the code accepts by using the BraTS preprocessing example from [batchgenerators/examples/brats2017](https://github.com/MIC-DKFZ/batchgenerators/tree/master/batchgenerators/examples/brats2017) courtesy of Fabian Issense.
 
-The command provided below can be used to run to perform the preprocessing process. It is worth noting that the data is preprocessed into `.npy` files and takes up significantly more disk space (22GB preprocessed training data compared to 3GB for raw training data!!) compared to the original `.nii.gz` files. 
+Run the commands provided below to perform the preprocessing step. It is worth noting that the data is preprocessed into `.npy` files and takes up significantly more disk space (22GB preprocessed training data compared to 3GB for raw training data!!) compared to the original `.nii.gz` files. 
+
+The preprocessing command is different for both Windows and Unix based systems due to their path differences.
+
+For Unix-based systems (Linux, MacOS),
 ```
-$ insert preprocessing command here and make options for both windows and linux/maOS systems
+$ python preprocessing.py -type Training
+$ python preprocessing.py -type Test 
 ```
+
+For Windows-based systems,
+```
+$ python preprocessing.py -type Training -os Windows
+$ python preprocessing.py -type Test -os Windows
+```
+
 All raw data will be preprocessed into the directory `brats_data_preprocessed/Brats20TrainingData` and `brats_data_preprocessed/Brats20ValidationData` respectively.
 
 

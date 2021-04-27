@@ -2,9 +2,8 @@
 #%%
 from brats_data_loader import get_list_of_patients, get_train_transform, iterate_through_patients, BRATSDataLoader, get_train_transform_aggro
 from train_test_function import ModelTrainer
-from jonas_net import AlbuNet3D34
-from cj_net import * 
-from loss import  *
+from models import AlbuNet3D34, AlbuNet3D34_4channels
+from loss import GeneralizedDiceLoss, SimpleDiceLoss, dice_multi_class, dice
 
 from batchgenerators.utilities.data_splitting import get_split_deterministic
 from batchgenerators.dataloading import MultiThreadedAugmenter
@@ -28,8 +27,8 @@ parser.add_argument('--patch_depth', type=int, help='Depth of the Input Patch', 
 parser.add_argument('--patch_width', type=int, help='Width of the Input Patch', default=128)
 parser.add_argument('--patch_height', type=int, help='Height of the Input Patch', default=128)
 parser.add_argument('--training_max', type=int, help='max number of patients for training', default=369)
-parser.add_argument('--training_batch_size', type=int, help='Size of batch in training', default=100)
-parser.add_argument('--validation_batch_size', type=int, help='Size of batch in validation', default=100)
+parser.add_argument('--training_batch_size', type=int, help='Size of minibatch in training', default=100)
+parser.add_argument('--validation_batch_size', type=int, help='Size of minibatch in validation', default=100)
 parser.add_argument('--num_channels', type=int, help='Number of input channels', default=3)
 parser.add_argument('--no_pretrained', dest='pretrained', action='store_false', help='ResNet34 without Pretraining')
 parser.set_defaults(pretrained=True)
@@ -60,9 +59,6 @@ print(f"The number of training patients: {len(patients)}")
 
 batch_size = args.batch_size
 patch_size = [args.patch_depth, args.patch_width, args.patch_height]
-
-# in_channels = ['t1c', 't2', 'flair']
-#in_channels = ['t1', 't1c', 't2', 'flair']
 
 if args.num_channels == 3:
     in_channels = ['t1c', 't2', 'flair']
@@ -127,17 +123,15 @@ if args.num_channels == 3:
 
 elif args.num_channels == 4:
     net_3d = AlbuNet3D34_4channels(num_classes=num_classes, pretrained=args.pretrained, is_deconv=True,updated=True)
-    #net_3d = AlbuNet3D34_4channels(num_classes=num_classes, pretrained=args.pretrained, is_deconv=True,updated=False)
-
 
 
 #%%
 loss_fn = GeneralizedDiceLoss() if args.multi_class else SimpleDiceLoss()
 metric = dice_multi_class if args.multi_class else dice
 
-print(f"Training batch size is: {args.training_batch_size}")
-print(f"Validation batch size is: {args.validation_batch_size}")
-print(f"Number of training epochs is: {args.epochs}")
+# print(f"Training batch size is: {args.training_batch_size}")
+# print(f"Validation batch size is: {args.validation_batch_size}")
+print(f"Training for {args.epochs} epochs")
 
 model_trainer = ModelTrainer(args.name, net_3d, tr_gen, val_gen, loss_fn, metric,
                              lr=args.learning_rate, epochs=args.epochs,

@@ -49,8 +49,6 @@ class ModelTrainer():
         
     def run(self):
         t0 = time()
-        #print(f"Training epoch batch size: {self.num_batches_per_epoch}")
-        #print(f"Validation epoch batch size: {self.num_validation_batches_per_epoch}")
 
         # first val loss before training
         self.val_epoch(self.model, self.val_loader, 0)
@@ -81,9 +79,7 @@ class ModelTrainer():
             batch = next(train_loader)
             data = torch.from_numpy(batch['data'])
             target = torch.from_numpy(batch['seg']).type(torch.LongTensor)
-#            print(f"Training Data shape: {data.shape}")
-#            print(f"Training Target labels shape: {target.shape}")
-            
+
             if self.multi_class:
                 target_oh = torch.zeros(target.shape[0], 4, *target.shape[2:])
                 target_oh.scatter_(1, target, 1)
@@ -91,10 +87,8 @@ class ModelTrainer():
             if self.use_gpu:
                 data, target = data.cuda(), target.cuda()
 
-            # data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
- #           print(f"Training output shape: {output.detach().cpu().numpy().shape}")
             loss = self.loss_fn(output, target)
             loss.backward()
             optimizer.step()
@@ -112,9 +106,6 @@ class ModelTrainer():
             # loss before updating the weights (i.e. at the beginning of each iteration)
             iteration = (epoch-1) * self.num_batches_per_epoch + batch_idx
             self.train_writer.add_scalar('loss', loss, iteration)
-            
-        # for name, param in model.named_parameters():
-        #     self.train_writer.add_histogram(name, param.clone().cpu().data.numpy(), iteration)
             
         train_loss /= self.num_batches_per_epoch
 
@@ -149,7 +140,7 @@ class ModelTrainer():
                 if self.use_gpu:
                     data, target = data.cuda(), target.cuda()
                 output = model(data)
-                testing_dims = output.detach().cpu().numpy()
+                # testing_dims = output.detach().cpu().numpy()
   #              print(f"Dimensions of the validation output: {testing_dims.shape}")
 		
                 val_loss += self.loss_fn(output, target).item()

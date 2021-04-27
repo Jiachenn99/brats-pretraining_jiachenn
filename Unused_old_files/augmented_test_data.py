@@ -2,10 +2,12 @@
 #%%
 from brats_data_loader import get_list_of_patients, get_train_transform, iterate_through_patients, BRATSDataLoader
 from train_test_function import ModelTrainer
-from jonas_net import AlbuNet3D34
+from models import AlbuNet3D34
 from brats_data_loader import BRATSDataLoader
 from batchgenerators.utilities.data_splitting import get_split_deterministic
 from batchgenerators.dataloading import MultiThreadedAugmenter
+from loss import *
+import logging
 
 
 #%%
@@ -35,18 +37,10 @@ parser.add_argument('--no_multiclass', dest='multi_class', action='store_false',
 parser.set_defaults(multi_class=True)
 args = parser.parse_args()
 
-#torch.manual_seed(args.seed)
 
-# Training data
-# patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
-# print(f"The number of training patients: {len(patients)}")
 batch_size = args.batch_size
-# patch_size = [args.patch_depth, args.patch_width, args.patch_height]
 in_channels = ['t1c', 't2', 'flair']
 
-#%%
-# num_splits=5 means 1/5th is validation data!
-# patients_train, patients_val = get_split_deterministic(patients, fold=0, num_splits=5, random_state=args.seed)
 
 #%% 
 # Test data (using validation data of brats20, brats18 for testing)
@@ -55,16 +49,6 @@ patients_test = get_list_of_patients('brats_data_preprocessed/Brats{}ValidationD
 target_patients = patients_test[args.patient_start:args.patient_end]
 print(f"The number of testing patients: {len(target_patients)}")
 
-
-#%%
-def get_region(labels, region='tumor_core'):
-    if region=='tumor_core':
-        return ((labels == 1) | (labels == 3))
-    elif region=='edema':
-        return ((labels == 1) | (labels == 2) | (labels == 3))
-    elif region=='enhancing':
-        return (labels == 3)
-
 #%%
 if args.multi_class:
     num_classes = 4
@@ -72,11 +56,8 @@ else:
     num_classes = 1
 
 #%%
-# try:
+
 import SimpleITK as sitk
-# except ImportError:
-#     logging.info("You need to have SimpleITK installed to run this example!")
-#     raise ImportError("SimpleITK not found")
 
 def save_segmentation_as_nifti(segmentation, metadata, output_file):
     original_shape = metadata['original_shape']
@@ -92,41 +73,6 @@ def save_segmentation_as_nifti(segmentation, metadata, output_file):
     sitk_image.SetSpacing(tuple(metadata['spacing'][[2, 1, 0]]))
     # logging.info(output_file)
     sitk.WriteImage(sitk_image, output_file)
-
-
-#%%
-def np_dice(outputs, targets):
-
-    # try without sigmoid
-    # outputs = F.sigmoid(outputs)
-    outputs = np.float32(outputs)
-    smooth = 1e-15
-
-    targets = np.float32((targets == 1) | (targets == 3))
-    union_fg = np.sum(outputs+targets) + smooth
-    intersection_fg = np.sum(outputs*targets) + smooth
-
-    dice = 2 * intersection_fg / union_fg
-
-    return dice
-
-#%%
-def np_dice_multi_class(outputs, targets):
-    smooth = 1e-15
-
-    dices = []
-
-    for region in ['edema', 'tumor_core', 'enhancing']:
-        output_region = np.float32(get_region(outputs, region))
-        target_region = np.float32(get_region(targets, region))
-
-        union_fg = (output_region+target_region).sum() + smooth
-        intersection_fg = (output_region*target_region).sum()
-
-        dice = 2 * intersection_fg / union_fg
-        dices.append(dice)
-
-    return dices
 
 
 #%%
@@ -226,12 +172,12 @@ for idx, patient in enumerate(target_patients):
 
     np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
 
-    # # if args.multi_class:
-    # #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
-    # # else:
-    # #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
-    # # logging.info("{}, {}".format(idx, dice))
-    # # dices.append(dice)
+    # if args.multi_class:
+    #    dice = np_dice_multi_class(np_cut, patient_data[0,3,:,:,:])
+    # else:
+    #    dice = np_dice(np_cut, patient_data[0,3,:,:,:])
+    # logging.info("{}, {}".format(idx, dice))
+    # dices.append(dice)
 
     # repair labels
     np_cut[np_cut == 3] = 4

@@ -11,17 +11,17 @@ except ImportError:
 from multiprocessing import Pool
 import argparse
 parser = argparse.ArgumentParser(description='Preprocessing')
-parser.add_argument('-type', type=str, help='Dataset Type (Training or Test)')
+parser.add_argument('-type', type=str, help='Dataset Type (Training or Test)',default="Training")
+parser.add_argument('-os', type=str, help='Windows or Unix based systems', default="Unix")
 args = parser.parse_args()
 
 if args.type == "Training":
     source_folder = brats_folder_with_downloaded_data_training_2020
     destination_folder = brats_preprocessed_destination_folder_train_2020
 
-else:
+elif args.type == "Test":
     source_folder = brats_folder_with_downloaded_data_test_2020
     destination_folder = brats_preprocessed_destination_folder_test_2020
-
 
 def get_list_of_files_2020(base_dir, type="Training"):
     """
@@ -47,7 +47,7 @@ def get_list_of_files_2020(base_dir, type="Training"):
             seg_file = join(patient_directory, p + "_seg.nii.gz")
             this_case = [t1_file, t1c_file, t2_file, flair_file, seg_file]
             
-        else:
+        elif type=="Test":
             this_case = [t1_file, t1c_file, t2_file, flair_file]
 
         assert all((isfile(i) for i in this_case)), "some file is missing for patient %s; make sure the following " \
@@ -58,9 +58,6 @@ def get_list_of_files_2020(base_dir, type="Training"):
 
 
 def load_and_preprocess(case, patient_name, output_folder):
-
-    # print("in patient name: ", patient_name)
-    # print("in output folder: ", output_folder)
     """
     loads, preprocesses and saves a case
     This is what happens here:
@@ -128,9 +125,7 @@ def load_and_preprocess(case, patient_name, output_folder):
 
     # now save as npz
     np.save(join(output_folder, patient_name + ".npy"), imgs_npy)
-    # print("Output folder end: ", join(output_folder, patient_name + ".npy"))
-    # print("\n")
-
+    print("Saving to: ", join(output_folder, patient_name + ".npy"))
 
     metadata = {
         'spacing': spacing,
@@ -144,9 +139,6 @@ def load_and_preprocess(case, patient_name, output_folder):
 
 
 def load_and_preprocess_test_data(case, patient_name, output_folder):
-
-    # print("in patient name: ", patient_name)
-    # print("in output folder: ", output_folder)
     """
     loads, preprocesses and saves a case
     This is what happens here:
@@ -178,12 +170,12 @@ def load_and_preprocess_test_data(case, patient_name, output_folder):
     origin = imgs_sitk[0].GetOrigin()
 
     original_shape = imgs_npy[0].shape
-    print(f"Original shape is: {original_shape}")
+    # print(f"Original shape is: {original_shape}")
 
 
     # now stack the images into one 4d array, cast to float because we will get rounding problems if we don't
     imgs_npy = np.concatenate([i[None] for i in imgs_npy]).astype(np.float32)
-    print(f"After concat shape is: {imgs_npy.shape}")
+    # print(f"After concat shape is: {imgs_npy.shape}")
 
 
     # now find the nonzero region and crop to that
@@ -192,47 +184,37 @@ def load_and_preprocess_test_data(case, patient_name, output_folder):
     nonzero = np.array([np.min([i[0] for i in nonzero], 0), np.max([i[1] for i in nonzero], 0)]).T
     # nonzero now has shape 3, 2. It contains the (min, max) coordinate of nonzero voxels for each axis
 
-    print(f"Nonzero shape is {nonzero.shape}")
-
     # now crop to nonzero
     imgs_npy = imgs_npy[:,
                nonzero[0, 0] : nonzero[0, 1] + 1,
                nonzero[1, 0]: nonzero[1, 1] + 1,
                nonzero[2, 0]: nonzero[2, 1] + 1,
                ]
-    print(f"After cropping nonzero shape is : {imgs_npy.shape}")
+
 
     # now we create a brain mask that we use for normalization
     # this excludes the seg array since imgs_npy[:-1] means its not covered
     nonzero_masks = [i != 0 for i in imgs_npy[:-1]]
     brain_mask = np.zeros(imgs_npy.shape[1:], dtype=bool)
-
-    print(f"Brain mask shape: {brain_mask.shape}")
-
     for i in range(len(nonzero_masks)):
         brain_mask = brain_mask | nonzero_masks[i]
 
     # now normalize each modality with its mean and standard deviation (computed within the brain mask)
-    # This also excludes normalizing the last element of the list (seg if 5 files), changed to include last file
-
+   
+    # This also excludes normalizing the last element of the list (seg if 5 files), changed to include last file 
     for i in range(len(imgs_npy)):
         mean = imgs_npy[i][brain_mask].mean()
         std = imgs_npy[i][brain_mask].std()
         imgs_npy[i] = (imgs_npy[i] - mean) / (std + 1e-8)
         imgs_npy[i][brain_mask == 0] = 0
 
-    print(f"Imgs npy after normalizing: {imgs_npy.shape}")
-
-
-    # the segmentation of brats has the values 0, 1, 2 and 4. This is pretty inconvenient to say the least.
+    # the segmentation of BraTS has the values 0, 1, 2 and 4. This is pretty inconvenient to say the least.
     # We move everything that is 4 to 3
     imgs_npy[-1][imgs_npy[-1] == 4] = 3
 
     # now save as npz
     np.save(join(output_folder, patient_name + ".npy"), imgs_npy)
-    # print("Output folder end: ", join(output_folder, patient_name + ".npy"))
-    # print("\n")
-
+    print("Saving to: ", join(output_folder, patient_name + ".npy"))
 
     metadata = {
         'spacing': spacing,
@@ -269,14 +251,21 @@ if __name__ == "__main__":
 
     maybe_mkdir_p(destination_folder)
 
-    patient_names = [i[0].split("/")[-2] for i in list_of_lists]
-    print(patient_names)
+    if args.os == "Unix":
+        patient_names = [i[0].split("/")[-2] for i in list_of_lists]
+
+    elif args.os == "Windows":
+        patient_names = [i[0].split("\\")[-2] for i in list_of_lists]
+
+    # print(patient_names)
 
     p = Pool(processes=num_threads_for_brats_example)
 
-    #p.starmap(load_and_preprocess, zip(list_of_lists, patient_names, [brats_preprocessed_folder] * len(list_of_lists)))
-    # p.starmap(load_and_preprocess, zip(list_of_lists, patient_names, [brats_preprocessed_destination_folder_2020] * len(list_of_lists)))
-    p.starmap(load_and_preprocess_test_data, zip(list_of_lists, patient_names, [destination_folder] * len(list_of_lists)))
+    if args.type == "Training": 
+        p.starmap(load_and_preprocess, zip(list_of_lists, patient_names, [destination_folder] * len(list_of_lists)))
+
+    elif args.type == "Test":
+        p.starmap(load_and_preprocess_test_data, zip(list_of_lists, patient_names, [destination_folder] * len(list_of_lists)))
 
     p.close()
     p.join()
