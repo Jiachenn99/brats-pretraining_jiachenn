@@ -154,8 +154,7 @@ class AlbuNet3D34(nn.Module):
         #self.encoder = models.resnet50(pretrained=pretrained)
         #self.encoder = models.resnet101(pretrained=pretrained)
         #self.encoder = models.deeplabv3_resnet50(pretrained=pretrained)
-
-        
+     
         self.pool = nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2)) # kernel size decreased
         conv0_modules = [self.encoder.conv1, self.encoder.bn1, self.encoder.relu, self.pool]
         self.conv0 = nn.Sequential(*transform_module_list(conv0_modules))
@@ -194,21 +193,21 @@ class AlbuNet3D34(nn.Module):
         # Albunet architecture starts below
 
         # self.center = Upsample2D(512, num_filters * 8 * 2, num_filters * 8)
-        self.center = ConvRelu(512, num_filters * 8) # 128
+        self.center = ConvRelu(512, num_filters * 8) # 128 (512, 128)
 
-        self.dec5 = Upsample2D(512 + num_filters * 8, num_filters * 8 * 2, num_filters * 8)
+        self.dec5 = Upsample2D(512 + num_filters * 8, num_filters * 8 * 2, num_filters * 8) # (640, 256, 128)
         # self.dec5 = Upsample2D(512, num_filters * 8 * 2, num_filters * 8)
-        self.dec4 = Upsample2D(256 + num_filters * 8, num_filters * 8 * 2, num_filters * 8)
-        self.dec3 = Upsample2D(128 + num_filters * 8, num_filters * 4 * 2, num_filters * 2)
-        self.dec2 = Upsample2D(64 + num_filters * 2, num_filters * 2 * 2, num_filters * 2 * 2)
-        self.dec1 = Upsample2D(num_filters * 2 * 2, num_filters * 2 * 2, num_filters)
-        self.dec0 = ConvRelu(num_filters, num_filters)
-        self.final = nn.Conv3d(num_filters, num_classes, kernel_size=1)
+        self.dec4 = Upsample2D(256 + num_filters * 8, num_filters * 8 * 2, num_filters * 8) # (384, 256, 128)
+        self.dec3 = Upsample2D(128 + num_filters * 8, num_filters * 4 * 2, num_filters * 2) # (256, 128, 32)
+        self.dec2 = Upsample2D(64 + num_filters * 2, num_filters * 2 * 2, num_filters * 2 * 2) # (96, 64, 64)
+        self.dec1 = Upsample2D(num_filters * 2 * 2, num_filters * 2 * 2, num_filters) # (64, 64, 16)
+        self.dec0 = ConvRelu(num_filters, num_filters) # (16,16)
+        self.final = nn.Conv3d(num_filters, num_classes, kernel_size=1) # (16, 4, 1)
         
-        self.depth1 = ConvRelu(512, 512, depth=True)
-        self.depth2 = ConvRelu(num_filters * 8, num_filters * 8, depth=True)
-        self.depth3 = ConvRelu(num_filters * 2 * 2, num_filters * 2 * 2, depth=True)
-        self.depth4 = ConvRelu(num_filters, num_filters, depth=True)
+        self.depth1 = ConvRelu(512, 512, depth=True) # (512, 512)
+        self.depth2 = ConvRelu(num_filters * 8, num_filters * 8, depth=True) # (128, 128)
+        self.depth3 = ConvRelu(num_filters * 2 * 2, num_filters * 2 * 2, depth=True) # (64, 64)
+        self.depth4 = ConvRelu(num_filters, num_filters, depth=True) # (16,16)
         
     def forward(self, x):
         conv0 = self.conv0(x)

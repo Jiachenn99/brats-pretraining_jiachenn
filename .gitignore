@@ -1,3 +1,4 @@
+figures/*
 slurm*.out
 system_slurms/*
 Unused_sh_scripts/*
@@ -13,6 +14,8 @@ saved_models/*
 results-2d-no-pretraining/*
 Brats17-2D-Results/*
 Brats17-3D-Results/*
+CSV_Results/*
+
 
 2d-no-pretrain.csv
 2d-pretrain.csv
