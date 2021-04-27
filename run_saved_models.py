@@ -2,8 +2,7 @@
 #%%
 from brats_data_loader import get_list_of_patients, get_train_transform, iterate_through_patients, BRATSDataLoader
 from train_test_function import ModelTrainer
-from jonas_net import AlbuNet3D34
-from cj_net import AlbuNet3D34_4channels
+from models import AlbuNet3D34, AlbuNet3D34_4channels
 from loss import *
 
 from batchgenerators.utilities.data_splitting import get_split_deterministic
