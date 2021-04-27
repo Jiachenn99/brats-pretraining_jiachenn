@@ -14,8 +14,9 @@ To run this project, Python versions that are **between Python 3.0 and Python 3.
 
 We will provide two instruction sets for setup, one for running on the University's GPU Cluster, and one for running locally on your own computer.
 
-NOTE: `python` and `python3` in the command line can be interchangeable depending on your installation method. Both work for our project.
+NOTE: `python` and `python3` in the command line can be interchangeable depending on your installation method. 
 
+This setup section has been tested and proven to work on the University's GPU Cluster running `CentOS Linux 7 (Core)`, `Ubuntu 20.04.2 LTS` and `Windows 10 Home`. For **`Ubuntu`**, kindly adapt the commands to use `python3.6` as the prefix for your commands.
 
 ## Setting up a Virtual Environment and Installing Dependencies
 We recommend installing all our packages and dependencies in a virtual environment to prevent conflicts with other possible packages installed on the base system. 
@@ -23,12 +24,11 @@ We recommend installing all our packages and dependencies in a virtual environme
 To set up all the dependencies required to run this project, the following commands can be ran in your terminal (Command Prompt, Bash) in the **root directory** of this project `brats-pretraining_jiachenn`. We recommend using the `pip` package manager to install our dependencies as some dependencies are not available on `Anaconda/Conda`.
 
 ### Running on the University's GPU Cluster
-You could create a virtual environment on the GPU Cluster with the commands in the next section if you do not want package conflicts, else there is no need because Carey automatically creates a virtual environment on sign in and you can just install all packages using `pip` with the command:
+You could create a virtual environment on the GPU Cluster with the commands in the next section if you do not want package conflicts, else there is no need because Carey automatically creates a virtual environment on sign in and you can just install all packages with:
 ```
 $ python -m pip install --upgrade pip
 $ pip install -r requirements.txt
 ```
-
 ### Running Locally
 
 To create and activate a virtual environment using the `venv` package that is shipped with Python 3.3 and above:
