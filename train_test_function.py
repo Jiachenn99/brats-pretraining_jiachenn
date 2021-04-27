@@ -43,7 +43,9 @@ class ModelTrainer():
         # otherwise tensorboard will have overlapping graphs
         self.model_name = '{}_lr_{}'.format(model_name, lr)
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
-        self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        self.save_dir = f'models/{self.model_name}' 
         self.train_writer = SummaryWriter(self.log_dir + '/train')
         self.val_writer = SummaryWriter(self.log_dir + '/test')
         
