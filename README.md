@@ -174,10 +174,10 @@ $ sbatch run_experiments_3d.sh
 
 However if you are running locally with a CUDA-enabled device, use this command to run our configurations:
 ```
-$ python3 main.py -name albunet_4_channels_1 --num_channels 4 --seed 1		
+$ python3 main.py -name albunet_4_channels_1 --batch_size 12 --num_channels 4 --seed 1		
 ```
 
-When training is completed, the model produced will be saved to `brats-pretraining-jiachenn/models` with the name specified in the `-name` argument.
+When training is completed, the model produced will be saved to `brats-pretraining-jiachenn/saved_models` with the name specified in the `-name` argument.
 
 ## Producing segmentation output
 To produce the segmentation output, we require a crucial piece of information, the **model name**. We have **standardized the model name** for ease of reproducing our results, hence the commands below can be ran as it is. Test set predictions are saved to `segmentation_output/<model name>`.
@@ -243,7 +243,7 @@ brats-pretraining_jiachenn
 │       Read-Logs.ipynb
 │       Seg-Graphic.ipynb
 │
-├───models
+├───saved_models
 ├───segmentation_output
 └───tensorboard_logs
 ```

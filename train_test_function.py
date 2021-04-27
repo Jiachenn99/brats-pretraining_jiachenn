@@ -45,7 +45,7 @@ class ModelTrainer():
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
-        self.save_dir = f'models/{self.model_name}' 
+        self.save_dir = f'saved_models/{self.model_name}' 
         self.train_writer = SummaryWriter(self.log_dir + '/train')
         self.val_writer = SummaryWriter(self.log_dir + '/test')
         
@@ -60,7 +60,7 @@ class ModelTrainer():
             self.train_epoch(self.model, self.train_loader, self.optimizer, epoch)
             self.val_epoch(self.model, self.val_loader, epoch)
 
-            if epoch==40 or epoch==50:
+            if epoch % 10 == 0:
                 self.save_model(self.save_dir+f"_epoch_{epoch}")
 
         time_elapsed = time() - t0
