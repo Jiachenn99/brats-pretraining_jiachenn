@@ -1,13 +1,13 @@
 # COMP3003 Individual Dissertation
 
-Credits to the original code belong to Jonas Wacker @ https://github.com/joneswack/brats-pretraining with the paper [Transfer Learning for Brain Tumor Segmentation](https://arxiv.org/abs/1912.12452) on arXiv.
+Credits to the original code belong to Jonas Wacker @ https://github.com/joneswack/brats-pretraining published in the paper [Transfer Learning for Brain Tumor Segmentation](https://arxiv.org/abs/1912.12452) on arXiv.
 
 This repository contains code to reproduce our proposed extension of the original project.
 
 # Setup and Installation
-To run this project, Python 3.6 and above **must** be installed on your system. We recommend downloading [Python 3.6.8](https://www.python.org/downloads/release/python-368/) from the official source as this is the official version of Python we use in our project. This project uses `PyTorch 1.5.1` with `CUDA 10.1`
+To run this project, **Python 3.6 and above** must be installed on your system. We recommend downloading [Python 3.6.8](https://www.python.org/downloads/release/python-368/) from the official source as this is the official version of Python we use in our project. This project uses `PyTorch 1.5.1` with `CUDA 10.1`
 
-Note: We **highly recommend** at least allocating ***40GB*** of disk space to store both preprocessed data and original data.
+Note: We **highly recommend** at least allocating ***40GB*** of disk space to store both preprocessed data and original data in the next few steps.
 
 ## Setting up PyTorch and CUDA
 
@@ -85,9 +85,9 @@ The general format for these flags are `-flag <value> or --flag <value>, e.g. --
 
 `--brats_test_year`: -->
 
-`--learning_rate`: Sets the learning rate for the model training
+`--learning_rate`: Sets the learning rate for the model training (default: 1e-3)
 
-`--epochs`: Number of training epochs
+`--epochs`: Number of training epochs (default: 50)
 
 `--seed`: Can be a random value for PyTorch weight initialization
 
@@ -110,7 +110,7 @@ $ sbatch run_experiments_3d.sh
 
 However if you are running locally with a CUDA-enabled device, use the command to train with GPU enabled and all default settings:
 ```
-$ python3 main.py -name <model name> --epochs 50 --seed 1		
+$ python3 main.py -name <model name> --seed 1		
 ```
 
 
@@ -118,16 +118,22 @@ $ python3 main.py -name <model name> --epochs 50 --seed 1
 When training is completed, the model produced will be saved to `brats-pretraining-jiachenn/models` with the name specified in the `-name` argument.
 
 ## Producing segmentation output
-To produce the segmentation output, we require a crucial piece of information, the **model name**. The command below executes the prediction process and saves test data predictions to `segmentation_output/<model name>`
+To produce the segmentation output, we require a crucial piece of information, the **model name**. We have **standardized the model name** for ease of reproducing our results, hence the commands below can be ran as it is. Test set predictions are saved to `segmentation_output/<model name>`.
+
+If you are running on the University's GPU cluster with the Slurm scheduler:
+```
+$ sbatch produce_seg_output_saved_models.sh
+```
+
+If you are running locally,
 
 ```
-$ python3 run_saved_models.py -model_name $i 
+$ python3 run_saved_models.py -model_name <model name> $i 
 ```
 
 # Expected Directory Structure TO BE UPDATED!
 
 The structure of this repository should be as follows:
-
 
 ```
 brats-pretraining_jiachenn
@@ -159,3 +165,20 @@ brats-pretraining_jiachenn
 ├───models
 ├───segmentation_output
 └───tensorboard_logs
+
+```
+<!-- - brats_data_preprocessed: The preprocessed BraTS data stored in a separate subdirectory for each year and type (train/validation)
+- models: The models saved by PyTorch
+- segmentation_output: The output segmentations produced by the trained model in NIFTI format. These can be directly uploaded to the BraTS evaluation server.
+- tensorboard_logs: Tensorboard logfiles that contain the dice scores/losses over time.
+- Read-Logs.ipynb: Notebook to visualize the tensorboard logs
+- Dice-Plots.ipynb: Notebook to visualize the dice box plots
+- Seg-Graphic.ipynb: Notebook to visualize the example patient segmentation
+- brats_data_loader.py: Wrapper class for the BraTS dataloader used to train the model from the preprocessed files.
+- jonas_net.py: Contains the AlbuNet3D architecture using a ResNet34 encoder.
+- tb_log_reader.py: Wrapper class to read tensorboard logs.
+- ternaus_unet_models.py: Reference file containing the original AlbuNet model.
+- train_jonas_net_batch.py: Python script to train the model for a given configuration passed as arguments.
+- train_test_function.py: Helper class to facilitate the training procedure for any deep learning model.
+
+- run_experiments_x.sh: Shell script to launch train_jonas_net_batch.py for the configurations used in the paper. -->
