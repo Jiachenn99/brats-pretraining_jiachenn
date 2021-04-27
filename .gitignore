@@ -1,7 +1,7 @@
 slurm*.out
 system_slurms/*
 Unused_sh_scripts/*
-
+discarded_files/*
 .vscode/*
 models/*
 augmented_segmentation_output/*

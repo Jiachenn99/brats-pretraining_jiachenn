@@ -41,7 +41,7 @@ class ModelTrainer():
         
         # we should have one log dir per run
         # otherwise tensorboard will have overlapping graphs
-        self.model_name = '{}_lr_{}_epochs_{}_epochbatch_{}'.format(model_name, lr, epochs, num_batches_per_epoch)
+        self.model_name = '{}_lr_{}'.format(model_name, lr)
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         self.train_writer = SummaryWriter(self.log_dir + '/train')
@@ -49,8 +49,8 @@ class ModelTrainer():
         
     def run(self):
         t0 = time()
-        print(f"Training epoch batch size: {self.num_batches_per_epoch}")
-        print(f"Validation epoch batch size: {self.num_validation_batches_per_epoch}")
+        #print(f"Training epoch batch size: {self.num_batches_per_epoch}")
+        #print(f"Validation epoch batch size: {self.num_validation_batches_per_epoch}")
 
         # first val loss before training
         self.val_epoch(self.model, self.val_loader, 0)
@@ -60,7 +60,7 @@ class ModelTrainer():
             self.train_epoch(self.model, self.train_loader, self.optimizer, epoch)
             self.val_epoch(self.model, self.val_loader, epoch)
 
-            if epoch%10==0:
+            if epoch==40 or epoch==50:
                 self.save_model(self.save_dir+f"_epoch_{epoch}")
 
         time_elapsed = time() - t0
