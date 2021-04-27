@@ -3,20 +3,49 @@
 Credits to the original code belong to Jonas Wacker @ https://github.com/joneswack/brats-pretraining published in the paper [Transfer Learning for Brain Tumor Segmentation](https://arxiv.org/abs/1912.12452) on arXiv.
 
 This repository contains code to reproduce our proposed extension of the original project.
-
-# Setup and Installation
-To run this project, **Python 3.6 and above** must be installed on your system. We recommend downloading [Python 3.6.8](https://www.python.org/downloads/release/python-368/) from the official source as this is the official version of Python we use in our project. This project uses `PyTorch 1.5.1` with `CUDA 10.1`
-
-## Recommended Hardware Specifications
+# Recommended Hardware Specifications
 Disk space: We **highly recommend** at least allocating ***40GB*** of disk space to store both preprocessed data and original data in the next few steps.
 
 GPU: We use a **RTX2080Ti 11GB** for our experiments. A smaller GPU will affect the required batch size and a larger GPU will allow a larger batch size.
 
 Memory: We recommend allocating 24GB of memory for this experiment.
+# Setup and Installation
+To run this project, Python versions that are **between Python 3.0 and Python 3.6.9** must be installed on your system. We recommend downloading [Python 3.6.8](https://www.python.org/downloads/release/python-368/) from the official source as this is the official version of Python we use in our project. 
 
+We will provide two instruction sets for setup, one for running on the University's GPU Cluster, and one for running locally on your own computer.
+
+NOTE: `python` and `python3` in the command line can be interchangeable depending on your installation method. Both work for our project.
+
+
+## Setting up a Virtual Environment and Installing Dependencies
+We recommend installing all our packages and dependencies in a virtual environment to prevent conflicts with other possible packages installed on the base system. 
+
+To set up all the dependencies required to run this project, the following commands can be ran in your terminal (Command Prompt, Bash) in the **root directory** of this project `brats-pretraining_jiachenn`. We recommend using the `pip` package manager to install our dependencies as some dependencies are not available on `Anaconda/Conda`.
+
+### Running on the University's GPU Cluster
+You could create a virtual environment on the GPU Cluster with the commands in the next section if you do not want package conflicts, else there is no need because Carey automatically creates a virtual environment on sign in and you can just install all packages using `pip` with the command:
+```
+$ python -m pip install --upgrade pip
+$ pip install -r requirements.txt
+```
+
+### Running Locally
+
+To create and activate a virtual environment using the `venv` package that is shipped with Python 3.3 and above:
+```
+$ python -m venv virtualenv
+$ source virtualenv/Scripts/activate
+```
+
+Run the following commands to install dependencies using `pip`:
+```
+$ python -m pip install --upgrade pip
+$ pip install -r requirements.txt
+```
 ## Setting up PyTorch and CUDA
-
 To install the version of PyTorch and CUDA that our project uses, simply run the following commands in sequence:
+
+### Running on the University's GPU Cluster
 
 ```
 $ module load nvidia/cuda-10.1
@@ -26,29 +55,20 @@ $ SRC=https://download.pytorch.org/whl/torch_stable.html
 $ pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f $SRC
 ```
 
-This will install `PyTorch 1.5.1` and `CUDA 10.1` from the source specified.
-
-## Install all other dependencies
-To set up all the dependencies required to run this project, the following commands can be ran in your terminal (Command Prompt, Bash) in the **root directory** of this project `brats-pretraining_jiachenn`. 
-
-If you are using `pip` as your package manager, run the following command to install our dependencies.
-
+### Running Locally on your Computer
 ```
 $ python -m pip install --upgrade pip
-$ pip install -r requirements.txt
+$ SRC=https://download.pytorch.org/whl/torch_stable.html
+$ pip install torch==1.5.1+cu101 torchvision==0.6.1+cu101 -f $SRC
 ```
 
-If you are using a package manager such as `Anaconda/Conda`, we can create a virtual environment and install all files into the environment with the following command:
-```
-$ conda create --name virtualenv --file requirements.txt
-```
-
+This will install `PyTorch 1.5.1` and `CUDA 10.1` from the source specified.
 
 # Dataset and Preprocessing
 ## Obtaining our dataset
 We use the both the Training and Validation dataset from the Multimodal Brain Tumour Segmentation Challenge 2020 (BraTS2020) in our experiments. The Training dataset consists of **369** entries, while the Validation dataset consists of **125** entries. We are using the Validation dataset as our **Test** dataset due to the unavailability of the actual Test dataset.
 
-The dataset folder can be downloaded [by clicking this link](www.google.com), and should be extracted into the root directory of this project. The resulting path for the dataset should be `brats-pretraining-jiachenn/dataset`
+The dataset folder can be downloaded [by clicking this link](https://drive.google.com/drive/folders/1MhqV0XlDljhF1ycdvZ7BlzreohnOHFmd?usp=sharing), and should be extracted into the root directory of this project. The resulting path for the dataset should be `brats-pretraining-jiachenn/dataset`
 
 ## Pre-processing our dataset
 Our dataset is first preprocessed into a format that the code accepts by using the BraTS preprocessing example from [batchgenerators/examples/brats2017](https://github.com/MIC-DKFZ/batchgenerators/tree/master/batchgenerators/examples/brats2017) courtesy of Fabian Issense.
@@ -59,11 +79,9 @@ For a Windows-based system, your `config.py` should look like this:
 
 ```
 brats_preprocessed_destination_folder_train_2020 = "brats_data_preprocessed\\Brats20TrainingData"
-
 brats_folder_with_downloaded_data_training_2020 = "dataset\\MICCAI_BraTS2020_TrainingData"
 
 brats_preprocessed_destination_folder_test_2020 = "brats_data_preprocessed\\Brats20ValidationData"
-
 brats_folder_with_downloaded_data_test_2020 = "dataset\\MICCAI_BraTS2020_ValidationData"
 
 num_threads_for_brats_example = 8
@@ -72,11 +90,9 @@ num_threads_for_brats_example = 8
 For a Unix-based system, your `config.py` should look like this:
 ```
 brats_preprocessed_destination_folder_train_2020 = "brats_data_preprocessed/Brats20TrainingData"
-
 brats_folder_with_downloaded_data_training_2020 = "dataset/MICCAI_BraTS2020_TrainingData"
 
 brats_preprocessed_destination_folder_test_2020 = "brats_data_preprocessed/Brats20ValidationData"
-
 brats_folder_with_downloaded_data_test_2020 = "dataset/MICCAI_BraTS2020_ValidationData"
 
 num_threads_for_brats_example = 8
@@ -121,15 +137,17 @@ The general format for these flags are `-flag <value> or --flag <value>, e.g. --
 
 `--patch_height`: Patch height to reisze image to (default: 128)
 
-<!-- `--training_max`: Maximum number of  -->
+`--training_max`: Number of patients to train on training set (range 0 - 369) 
 
 `--training_batch_size`: Size of training minibatch (default: 100)
 
 `--validation_batch_size`: Size of validation minibatch (default: 100)
 
-<!-- `--brats_train_year`: 
+`--brats_train_year`: Year of the BraTS Training dataset
 
-`--brats_test_year`: -->
+`--brats_test_year`: Year of the BraTS Testing dataset
+
+`--num_channels`: Number of input channels to the model (default: 4)
 
 `--learning_rate`: Sets the learning rate for the model training (default: 1e-3)
 
@@ -191,7 +209,7 @@ A few Jupyter Notebooks have been created under `brats-pretraining_jiachenn/Jupy
 
     Try reducing the batch size from 12 to a lower number. We recommend using the RTX2080Ti 11GB for our processing.
 
-# Expected Directory Structure TO BE UPDATED!
+# Expected Directory Structure
 
 The structure of this repository should be as follows:
 
