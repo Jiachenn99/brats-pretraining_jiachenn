@@ -1,3 +1,7 @@
-brats_preprocessed_folder = "/mnt/workspace/brats-pretraining/brats_data_preprocessed/Brats18ValidationData"
-brats_folder_with_downloaded_train_data = "/mnt/workspace/brain-image-segmentation/MRI_Data/Brats18ValidationData"
+brats_preprocessed_destination_folder_train_2020 = "brats_data_preprocessed/Brats20TrainingData"
+brats_folder_with_downloaded_data_training_2020 = "dataset/MICCAI_BraTS2020_TrainingData"
+
+brats_preprocessed_destination_folder_test_2020 = "brats_data_preprocessed/Brats20ValidationData"
+brats_folder_with_downloaded_data_test_2020 = "dataset/MICCAI_BraTS2020_ValidationData"
+
 num_threads_for_brats_example = 8

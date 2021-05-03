@@ -41,15 +41,17 @@ class ModelTrainer():
         
         # we should have one log dir per run
         # otherwise tensorboard will have overlapping graphs
-        self.model_name = '{}_lr_{}_epochs_{}'.format(model_name, lr, epochs)
+        self.model_name = model_name
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
-        self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
+        self.save_dir = f'saved_models/{self.model_name}' 
         self.train_writer = SummaryWriter(self.log_dir + '/train')
         self.val_writer = SummaryWriter(self.log_dir + '/test')
         
     def run(self):
         t0 = time()
-        
+
         # first val loss before training
         self.val_epoch(self.model, self.val_loader, 0)
         
@@ -63,7 +65,8 @@ class ModelTrainer():
         self.train_writer.close()
         self.val_writer.close()
 
-        self.save_model(self.save_dir)
+        self.save_model(self.save_dir+f"_epoch_{epoch}")
+        #self.save_model(self.save_dir+f"trainingvalbatchsize_{self.num_batches_per_epoch}")
         
         return time_elapsed
 
@@ -71,11 +74,12 @@ class ModelTrainer():
         model.train()
         train_loss = 0
         train_metric = [0, 0, 0]
+
         for batch_idx in range(self.num_batches_per_epoch):
             batch = next(train_loader)
             data = torch.from_numpy(batch['data'])
             target = torch.from_numpy(batch['seg']).type(torch.LongTensor)
-            
+
             if self.multi_class:
                 target_oh = torch.zeros(target.shape[0], 4, *target.shape[2:])
                 target_oh.scatter_(1, target, 1)
@@ -83,7 +87,6 @@ class ModelTrainer():
             if self.use_gpu:
                 data, target = data.cuda(), target.cuda()
 
-            # data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = self.loss_fn(output, target)
@@ -104,9 +107,6 @@ class ModelTrainer():
             iteration = (epoch-1) * self.num_batches_per_epoch + batch_idx
             self.train_writer.add_scalar('loss', loss, iteration)
             
-        # for name, param in model.named_parameters():
-        #     self.train_writer.add_histogram(name, param.clone().cpu().data.numpy(), iteration)
-            
         train_loss /= self.num_batches_per_epoch
 
         metrics = ['edema', 'tumor_core', 'enhancing']
@@ -119,7 +119,7 @@ class ModelTrainer():
                 metric_label = metrics[idx]
             self.train_writer.add_scalar(metric_label, m, iteration)
             log('[Train] Avg. {}: {:.2f}'.format(metric_label, m))
-
+		
         log('[Train] Avg. Loss: {:.2f}'.format(train_loss))
 
     def val_epoch(self, model, val_loader, epoch):
@@ -140,6 +140,9 @@ class ModelTrainer():
                 if self.use_gpu:
                     data, target = data.cuda(), target.cuda()
                 output = model(data)
+                # testing_dims = output.detach().cpu().numpy()
+  #              print(f"Dimensions of the validation output: {testing_dims.shape}")
+		
                 val_loss += self.loss_fn(output, target).item()
                 metric_output = self.metric(output, target)
                 if self.multi_class:
@@ -168,7 +171,7 @@ class ModelTrainer():
         log('[Val] Avg. Loss: {:.2f}'.format(val_loss))
         
     def save_model(self, path):
-        log('Saved to: {}'.format(path))
+        log(f'Saved to: {path}')
         torch.save(self.model.state_dict(), path)
         
     def load_model(self, path):
