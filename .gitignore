@@ -8,6 +8,7 @@ Unused_sh_scripts/*
 discarded_files/*
 .vscode/*
 # models/*
+tensorboard_logs/*
 augmented_segmentation_output/*
 segmentation_output/*
 brats_data_preprocessed/*
