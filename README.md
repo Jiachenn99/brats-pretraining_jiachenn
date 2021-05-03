@@ -190,7 +190,7 @@ $ sbatch produce_seg_output_saved_models.sh
 If you are running locally,
 
 ```
-$ python3 run_saved_models.py -model_name albunet_4_channels_1  
+$ python3 run_saved_models.py -model_name albunet_4_channels_1 --num_channels 4
 ```
 
 # Evaluation of Results
