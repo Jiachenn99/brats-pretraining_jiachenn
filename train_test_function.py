@@ -41,7 +41,7 @@ class ModelTrainer():
         
         # we should have one log dir per run
         # otherwise tensorboard will have overlapping graphs
-        self.model_name = '{}_lr_{}'.format(model_name, lr)
+        self.model_name = model_name
         self.log_dir = 'tensorboard_logs/{}/{}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
         # self.save_dir = 'models/{1}_{0}'.format(self.model_name, datetime.now().strftime("%Y%m%d-%H%M%S"))
@@ -60,14 +60,12 @@ class ModelTrainer():
             self.train_epoch(self.model, self.train_loader, self.optimizer, epoch)
             self.val_epoch(self.model, self.val_loader, epoch)
 
-            if epoch % 10 == 0:
-                self.save_model(self.save_dir+f"_epoch_{epoch}")
-
         time_elapsed = time() - t0
         log('\nTime elapsed: {:.2f} seconds'.format(time_elapsed))
         self.train_writer.close()
         self.val_writer.close()
 
+        self.save_model(self.save_dir+f"_epoch_{epoch}")
         #self.save_model(self.save_dir+f"trainingvalbatchsize_{self.num_batches_per_epoch}")
         
         return time_elapsed
