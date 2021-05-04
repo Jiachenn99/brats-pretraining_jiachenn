@@ -68,7 +68,13 @@ This will install `PyTorch 1.5.1` and `CUDA 10.1` from the source specified.
 ## Obtaining our dataset
 We use the both the Training and Validation dataset from the Multimodal Brain Tumour Segmentation Challenge 2020 (BraTS2020) in our experiments. The Training dataset consists of **369** entries, while the Validation dataset consists of **125** entries. We are using the Validation dataset as our **Test** dataset due to the unavailability of the actual Test dataset.
 
-The dataset folder can be downloaded [by clicking this link](https://drive.google.com/drive/folders/1MhqV0XlDljhF1ycdvZ7BlzreohnOHFmd?usp=sharing), and should be extracted into the root directory of this project. The resulting path for the dataset should be `brats-pretraining-jiachenn/dataset`
+### Via my personal Google Drive
+The dataset folder can be downloaded from my personal Google Drive [by clicking this link](https://drive.google.com/drive/folders/1MhqV0XlDljhF1ycdvZ7BlzreohnOHFmd?usp=sharing). The folder should be extracted into the root directory of this project. The resulting path for the dataset should be `brats-pretraining-jiachenn/dataset`.
+
+**NOTE: kindly remove any `.csv` files that are present in the data folders from the official organizer's download link. We will not be using them and they might interfere with the pre-processing step.**
+
+### Via the official organizers of BraTS2020
+I **highly** recommend obtaining the data from the official organizers if you are not able to access my Google Drive. You first have to create an account at ipp.cbica.upenn.edu/ , and go to `MICCAI BRATS 2020 -> BraTS'20:Data Request` to obtain the dataset. A download link will be provided in a text file which you can use to download the dataset. Like the step above, the data should be extracted into a folder named `dataset`.
 
 ## Pre-processing our dataset
 Our dataset is first preprocessed into a format that the code accepts by using the BraTS preprocessing example from [batchgenerators/examples/brats2017](https://github.com/MIC-DKFZ/batchgenerators/tree/master/batchgenerators/examples/brats2017) courtesy of Fabian Issense.
