@@ -38,6 +38,8 @@ parser.add_argument('--no_validation', dest='use_validation', action='store_fals
 parser.set_defaults(use_validation=True)
 parser.add_argument('--learning_rate', type=float, help='Learning Rate', default=1e-3)
 parser.add_argument('--epochs', type=int, help='Number of Training Epochs', default=50)
+parser.add_argument('--aggro_da', dest='aggro_da', action='store_true', help='Use more aggressive data augs')
+parser.set_defaults(aggro_da=False)
 parser.add_argument('--no_gpu', dest='use_gpu', action='store_false', help='Use CPU instead of GPU')
 parser.set_defaults(use_gpu=True)
 parser.add_argument('--no_multiclass', dest='multi_class', action='store_false', help='Tumor Core Only')
@@ -51,6 +53,7 @@ import logging
 logging.basicConfig(filename=args.name + '.log',level=logging.DEBUG)
 
 logging.info('Starting logging for {}'.format(args.name))
+logging.info(f"Training for: {args.epochs}")
 
 # Training data
 patients = get_list_of_patients('brats_data_preprocessed/Brats{}TrainingData'.format(str(args.brats_train_year)))
@@ -89,10 +92,15 @@ val_dl = BRATSDataLoader(
     in_channels=in_channels
 )
 #%%
-#tr_transforms = get_train_transform(patch_size)
-tr_transforms = get_train_transform(patch_size, noise="Riccian")
-#tr_transforms = get_train_transform_aggro(patch_size)
 
+if args.aggro_da:
+    print("Aggro DA")
+    tr_transforms = get_train_transform_aggro(patch_size)
+
+
+else:
+    print("Not aggro DA")
+    tr_transforms = get_train_transform(patch_size, noise="Riccian")
 
 
 # finally we can create multithreaded transforms that we can actually use for training
@@ -119,9 +127,11 @@ else:
 
 
 if args.num_channels == 3:
+    print("Original Albunet3D")
     net_3d = AlbuNet3D34(num_classes=num_classes, pretrained=args.pretrained, is_deconv=True)
 
 elif args.num_channels == 4:
+    print("4 channel Albunet3D")
     net_3d = AlbuNet3D34_4channels(num_classes=num_classes, pretrained=args.pretrained, is_deconv=True,updated=True)
 
 

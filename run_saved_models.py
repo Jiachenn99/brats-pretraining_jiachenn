@@ -132,7 +132,7 @@ def predict_patient_in_patches(patient_data, model, num_channels=3):
 dices = []
 
 #%% Load saved models
-model_path = "/cs/home/hfyjc3/brats-pretraining_jiachenn/models/"
+model_path = "saved_models/"
 
 if args.num_channels == 3:
     model = AlbuNet3D34(num_classes=4)
@@ -141,6 +141,42 @@ elif args.num_channels == 4:
     model =  AlbuNet3D34_4channels(num_classes=4)
 
 model.cuda()
+
+#%%
+model.load_state_dict(torch.load(model_path+f"{args.model_name}"))
+print(f"Model: {args.model_name}")
+
+#%%  Perform prediction and save predictons
+for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): 
+    print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
+    model.eval()
+    with torch.no_grad():
+        prediction = predict_patient_in_patches(patient_data, model, num_channels=args.num_channels)
+    
+    np_prediction = prediction.cpu().detach().numpy()
+
+    if args.multi_class:
+        np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
+    else:
+        np_prediction[np_prediction > 0] = 1 # tumor core
+        np_prediction[np_prediction < 0] = 0
+
+    np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
+
+    # repair labels
+    np_cut[np_cut == 3] = 4
+
+    output_path = '/'.join(target_patients[idx].split('/')[-2:])
+    output_path = os.path.join('segmentation_output', args.model_name, output_path + '.nii.gz')
+
+    if not os.path.exists(os.path.dirname(output_path)):
+        try:
+            os.makedirs(os.path.dirname(output_path))
+        except OSError as exc: # Guard against race condition
+            raise OSError('An error occured when trying to create the saving directory!')
+
+    save_segmentation_as_nifti(np_cut, meta_data, output_path)
+
 
 # for epochs in range(0+10, args.epochs_max, 10):
 #     model.load_state_dict(torch.load(model_path+f"{args.model_name}_{epochs}"))
@@ -180,39 +216,3 @@ model.cuda()
 #                 logging.info('An error occured when trying to create the saving directory!')
 
 #         save_segmentation_as_nifti(np_cut, meta_data, output_path)
-
-
-#%%
-model.load_state_dict(torch.load(model_path+f"{args.model_name}"))
-print(f"Model: {args.model_name}")
-
-#%%  Perform prediction and save predictons
-for idx, (patient_data, meta_data) in enumerate(iterate_through_patients(target_patients, in_channels)): 
-    print(f"Predicting patient {target_patients[idx].split('/')[-2:][-1]}")
-    model.eval()
-    with torch.no_grad():
-        prediction = predict_patient_in_patches(patient_data, model, num_channels=args.num_channels)
-    
-    np_prediction = prediction.cpu().detach().numpy()
-
-    if args.multi_class:
-        np_prediction = np.expand_dims(np.argmax(np_prediction, axis=1), axis=1)
-    else:
-        np_prediction[np_prediction > 0] = 1 # tumor core
-        np_prediction[np_prediction < 0] = 0
-
-    np_cut = center_crop_3D_image(np_prediction[0,0], patient_data.shape[2:])
-
-    # repair labels
-    np_cut[np_cut == 3] = 4
-
-    output_path = '/'.join(target_patients[idx].split('/')[-2:])
-    output_path = os.path.join('segmentation_output', args.model_name, output_path + '.nii.gz')
-
-    if not os.path.exists(os.path.dirname(output_path)):
-        try:
-            os.makedirs(os.path.dirname(output_path))
-        except OSError as exc: # Guard against race condition
-            raise OSError('An error occured when trying to create the saving directory!')
-
-    save_segmentation_as_nifti(np_cut, meta_data, output_path)
