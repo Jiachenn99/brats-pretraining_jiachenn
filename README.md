@@ -70,10 +70,9 @@ This will install `PyTorch 1.5.1` and `CUDA 10.1` from the source specified.
 ## Obtaining our dataset
 We use the both the Training and Validation dataset from the Multimodal Brain Tumour Segmentation Challenge 2020 (BraTS2020) in our experiments. The Training dataset consists of **369** entries, while the Validation dataset consists of **125** entries. We are using the Validation dataset as our **Test** dataset due to the unavailability of the actual Test dataset.
 
-The dataset folder can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1MhqV0XlDljhF1ycdvZ7BlzreohnOHFmd?usp=sharing) or [OneDrive]
+The dataset folder can be downloaded from [Google Drive](https://drive.google.com/drive/folders/1MhqV0XlDljhF1ycdvZ7BlzreohnOHFmd?usp=sharing) or [OneDrive](https://uniofnottm-my.sharepoint.com/:f:/g/personal/hfyjc3_nottingham_ac_uk/Euc50L0zVN5Mh1CtYFR80moBh13a5UNUEJPuSuxcqe5Pug?e=McyfBY) by clicking either one of the links and downloading the folder.
 
-
-The folder should be extracted into the root directory of this project. The resulting path for the dataset folder should be `brats-pretraining-jiachenn/dataset` that includes two folders, `MICCAI_BraTS2020_TrainingData` and `MICCAI_BraTS2020_ValidationData`
+The downloaded folder should be extracted into the root directory of this project. The resulting path for the dataset folder should be `brats-pretraining-jiachenn/dataset` that includes two folders, `MICCAI_BraTS2020_TrainingData` and `MICCAI_BraTS2020_ValidationData`
 
 ## Pre-processing our dataset
 Our dataset is first preprocessed into a format that the code accepts by using the BraTS preprocessing example from [batchgenerators/examples/brats2017](https://github.com/MIC-DKFZ/batchgenerators/tree/master/batchgenerators/examples/brats2017) courtesy of Fabian Issense.
