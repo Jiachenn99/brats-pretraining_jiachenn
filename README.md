@@ -1,8 +1,9 @@
 # COMP3003 Individual Dissertation
 
-Credits to the original code belong to Jonas Wacker @ https://github.com/joneswack/brats-pretraining published in the paper [Transfer Learning for Brain Tumor Segmentation](https://arxiv.org/abs/1912.12452) on arXiv.
+Credits to large parts of original code belonging to Jonas Wacker @ https://github.com/joneswack/brats-pretraining published in the paper [Transfer Learning for Brain Tumor Segmentation](https://arxiv.org/abs/1912.12452) on arXiv.
 
-This repository contains code to reproduce our proposed extension of the original project.
+This repository contains code to reproduce our proposed extension (Extending Upon a Transfer Learning Approach) of the original project.
+
 # Recommended Hardware Specifications
 Disk space: We **highly recommend** at least allocating ***40GB*** of disk space to store both preprocessed data and original data in the next few steps.
 
@@ -183,6 +184,31 @@ When training is completed, the model produced will be saved to `brats-pretraini
 ## Producing segmentation output
 To produce the segmentation output, we require a crucial piece of information, the **model name**. We have **standardized the model name** for ease of reproducing our results, hence the commands below can be ran as it is. Test set predictions are saved to `segmentation_output/<model name>`.
 
+### Require value as arguments flags
+
+`-model_name`: Name of the model 
+
+`--patch_depth`: Patch depth of the image (default: 24)
+
+`--patch_width`: Patch width of the image (default: 24)
+
+`--patch_height`: Patch height of the image (default: 24)
+
+`--epochs_max`: Number of epochs the model trained (default: 50)
+
+`--brats_test_year`: Year of the BraTS Testing dataset
+
+`-testing_train_set`: Whether to use training set as the prediction set (default=0 meaning not using training set)
+
+`--num_channels`: Number of input channels of the model (default: 4)
+
+### Toggle-basis flags
+These flags default to a certain value if not added into the training command e.g. putting `--no_gpu` in the training command uses CPU instead of GPU for training.
+
+`--no_gpu`: If selected, uses CPU for training. Else, uses GPU
+
+`--no_multiclass`: If enabled, only trains on Tumor Core, else trains on all classes provided.
+
 If you are running on the University's GPU cluster with the Slurm scheduler:
 ```
 $ sbatch produce_seg_output_saved_models.sh
@@ -219,32 +245,64 @@ brats-pretraining_jiachenn
 │   .gitignore
 │   brats_data_loader.py
 │   config.py
+│   Dice-Plots.ipynb
+│   Fixing Preprocessing.ipynb
 │   loss.py
 │   main.py
 │   models.py
 │   preprocessing.py
 │   produce_seg_output_saved_models.sh
+│   Read-Logs.ipynb
 │   README.md
+│   requirements.txt
 │   run_experiments_3d.sh
 │   run_saved_models.py
+│   Seg-Graphic.ipynb
 │   tb_log_reader.py
 │   train_test_function.py
+│   Trying_Resize.ipynb
 │
 ├───brats_data_preprocessed
 │   ├───Brats20TrainingData
+│   │       BraTS20_Training_001.npy
+│   │       BraTS20_Training_001.pkl
+│   │
 │   └───Brats20ValidationData
+│           BraTS20_Validation_001.npy
+│           BraTS20_Validation_001.pkl
+│
 ├───CSV_Results
+│       README.md
+│
 ├───dataset
 │   ├───MICCAI_BraTS2020_TrainingData
+│   │   └───BraTS20_Training_001
+│   │           BraTS20_Training_001_flair.nii.gz
+│   │           BraTS20_Training_001_seg.nii.gz
+│   │           BraTS20_Training_001_t1.nii.gz
+│   │           BraTS20_Training_001_t1ce.nii.gz
+│   │           BraTS20_Training_001_t2.nii.gz
+│   │
 │   └───MICCAI_BraTS2020_ValidationData
+│       └───BraTS20_Validation_001
+│               BraTS20_Validation_001_flair.nii.gz
+│               BraTS20_Validation_001_t1.nii.gz
+│               BraTS20_Validation_001_t1ce.nii.gz
+│               BraTS20_Validation_001_t2.nii.gz
+│
 ├───figures
+│       README.md
+│
 ├───Images
-├───Jupyter_Notebooks
-│       Dice-Plots.ipynb
-│       Read-Logs.ipynb
-│       Seg-Graphic.ipynb
+│       brats2020 ipp.png
+│       job section.png
 │
 ├───saved_models
+│       README.md
+│
 ├───segmentation_output
-└───tensorboard_logs
+├───tensorboard_logs
+└───Unused_old_files
+        augmented_test_data.py
+        ternaus_unet_models.py
 ```
