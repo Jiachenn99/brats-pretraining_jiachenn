@@ -34,7 +34,8 @@ $ pip install -r requirements.txt
 To create and activate a virtual environment using the `venv` package that is shipped with Python 3.3 and above:
 ```
 $ python -m venv virtualenv
-$ source virtualenv/Scripts/activate
+$ source virtualenv/Scripts/activate (for Unix based systems)
+$ .\virtualenv\Scripts\activate (for Windows based systems)
 ```
 
 Run the following commands to install dependencies using `pip`:
