@@ -1,7 +1,7 @@
 saved_models/*
 virtualenv/*
 dataset/*
-figures/*
+#figures/*
 slurm*.out
 system_slurms/*
 Unused_sh_scripts/*
